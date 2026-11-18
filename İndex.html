@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DOSTUM AI V5</title>
+<style>
+:root{--bg:#090d16;--p:#111827;--p2:#0a1220;--line:#243044;--txt:#e8eef8;--muted:#8fa0b8;--g:#20c997;--r:#ff647c;--y:#f5c451;--b:#69a7ff}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(140deg,#080c14,#0b1321 55%,#080c14);color:var(--txt);font:14px system-ui}header{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.brand{font-size:20px;font-weight:800}.brand span{color:var(--g)}.sub,.muted,.note{color:var(--muted)}.sub{font-size:12px}main{max-width:1450px;margin:auto;padding:16px;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px}.panel{background:linear-gradient(160deg,var(--p),#0d1422);border:1px solid var(--line);border-radius:13px;padding:14px;min-width:0}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}input,select,button{background:var(--p2);color:var(--txt);border:1px solid #2b3a51;border-radius:8px;padding:9px;font:inherit}input{flex:1;min-width:130px}button{cursor:pointer}.primary{background:#123b38;color:#8ff0d4}.head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.coin{font-size:19px;font-weight:750}.price{font-size:25px;font-weight:800}.stats,.signalrow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:12px 0}.stat,.signal{background:var(--p2);border:1px solid var(--line);border-radius:9px;padding:10px;min-width:0}.stat small,.signal small{display:block;color:var(--muted);font-size:11px}.stat b,.signal b{display:block;margin-top:5px;font-size:14px;overflow-wrap:anywhere}.chart{height:340px;background:#0a111d;border:1px solid var(--line);border-radius:10px;overflow:hidden}.chart canvas{width:100%;height:100%;display:block}.g{color:var(--g)}.r{color:var(--r)}.y{color:var(--y)}.note{font-size:11px;line-height:1.5;margin-top:10px}.list{max-height:650px;overflow:auto}.item{padding:9px;border-bottom:1px solid #1d293a;display:flex;justify-content:space-between;cursor:pointer}.item.selected,.item:hover{background:#17253a}.item small{display:block;color:var(--muted);font-size:10px}.tag{font-size:10px;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:3px 6px}footer{max-width:1450px;margin:auto;padding:0 16px 18px;color:var(--muted);font-size:11px}
+
+.hybrid{margin-bottom:12px;padding:11px;background:#0a1220;border:1px solid #2b3a51;border-radius:10px}
+.hybridhead{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center}
+.hybridlist{max-height:300px;overflow:auto;margin-top:8px}
+.hybriditem{display:flex;justify-content:space-between;gap:8px;padding:8px;border-bottom:1px solid #1d293a;cursor:pointer}
+.hybriditem:hover,.hybriditem.active{background:#17253a}
+.hybriditem small{display:block;color:var(--muted);font-size:10px}
+.hybridstats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px}
+.hybridstats .stat{padding:7px}
+.hybridstats .stat b{font-size:12px}
+#microChart{width:100%;height:105px;display:block;background:#08111d;border-radius:7px;margin-top:8px}
+@media(max-width:900px){main{grid-template-columns:1fr}.list{max-height:250px}}@media(max-width:560px){main{padding:9px}.stats,.signalrow{grid-template-columns:repeat(2,1fr)}.chart{height:280px}header{padding:13px}}
+</style></head><body>
+<header><div><div class="brand">DOSTUM AI <span>V5</span></div><div class="sub">Önce sermayeyi koru, sonra kazancı ara • OKX USDT-SWAP</div></div><div id="status" class="y">Bağlantı hazırlanıyor…</div></header>
+<main><section class="panel">
+<div class="toolbar"><input id="search" placeholder="Coin ara (BTC, DOGE…)"><select id="timeframe"><option value="5m">5 dakika</option><option value="15m">15 dakika</option><option value="1H">1 saat</option><option value="4H">4 saat</option></select><button id="refresh" class="primary">Yenile</button></div>
+<div class="head"><div><div id="coin" class="coin">BTC-USDT-SWAP</div><span id="price" class="price">—</span> <span id="change" class="muted">—</span></div><span class="tag">SADECE VERİ • OTOMATİK EMİR YOK</span></div>
+<div class="stats"><div class="stat"><small>Mark fiyatı</small><b id="mark">—</b></div><div class="stat"><small>24s hacim</small><b id="vol">—</b></div><div class="stat"><small>Fonlama</small><b id="funding">—</b></div><div class="stat"><small>Veri zamanı</small><b id="updated">—</b></div></div>
+<div class="chart"><canvas id="chart"></canvas></div>
+<div class="signalrow"><div class="signal"><small>Karar</small><b id="decision" class="y">BEKLE</b></div><div class="signal"><small>RSI 14</small><b id="rsi">—</b></div><div class="signal"><small>EMA 20 / 50</small><b id="emas">—</b></div><div class="signal"><small>Hacim</small><b id="volumecheck">—</b></div></div>
+<div class="signalrow"><div class="signal"><small>Giriş referansı</small><b id="entry">—</b></div><div class="signal"><small>Stop</small><b id="stop">—</b></div><div class="signal"><small>Hedef 1</small><b id="tp1">—</b></div><div class="signal"><small>Hedef 2</small><b id="tp2">—</b></div></div>
+<div class="panel" style="margin-top:12px;background:#0a1220"><b>ÇOKLU ZAMAN DİLİMİ • ERKEN UYARI</b>
+<div class="signalrow"><div class="signal"><small>5 dakika</small><b id="tf5" class="y">—</b></div><div class="signal"><small>15 dakika</small><b id="tf15" class="y">—</b></div><div class="signal"><small>1 saat</small><b id="tf1h" class="y">—</b></div><div class="signal"><small>4 saat</small><b id="tf4h" class="y">—</b></div></div>
+<div class="signalrow"><div class="signal" style="grid-column:span 2"><small>Erken uyarı</small><b id="early" class="y">BEKLE</b></div><div class="signal" style="grid-column:span 2"><small>İşlem teyidi</small><b id="consensus" class="y">BEKLE</b></div></div><div id="multiReason" class="note">Dört zaman dilimi kontrol ediliyor.</div></div>
+<div id="reason" class="note">Sinyal için veri bekleniyor.</div></section>
+<aside class="panel">
+<div class="hybrid">
+ <div class="hybridhead"><b>HİBRİT CANLI TARAMA</b><span id="hybridStatus" class="y">Hazırlanıyor</span></div>
+ <div class="note">Tüm USDT-SWAP sözleşmeleri taranır; ilk 30 aday WebSocket ile izlenir.</div>
+ <div class="hybridstats">
+  <div class="stat"><small>Sözleşme</small><b id="hybridCount">—</b></div>
+  <div class="stat"><small>Canlı takip</small><b id="hybridWatch">—</b></div>
+  <div class="stat"><small>1 sn mum</small><b id="hybridCandle">Bekliyor</b></div>
+ </div>
+ <canvas id="microChart"></canvas>
+ <div class="hybridstats">
+  <div class="stat"><small>1 sn değişim</small><b id="micro1">—</b></div>
+  <div class="stat"><small>5 sn değişim</small><b id="micro5">—</b></div>
+  <div class="stat"><small>Alış payı</small><b id="microFlow">—</b></div>
+ </div>
+ <div id="hybridAlert" class="note y">BEKLE • İlk tarama bekleniyor</div>
+ <div id="hybridList" class="hybridlist"></div>
+</div>
+<b>OKX USDT Sürekli Vadeli</b><div class="note"><span id="count">—</span> açık sözleşme</div><div id="coins" class="list"></div><div class="note">Liste OKX'in canlı USDT teminatlı SWAP sözleşmelerinden gelir.</div></aside></main>
+<footer>OKX halka açık piyasa verisi kullanılır. Yatırım tavsiyesi değildir. Sinyaller deneysel teknik değerlendirmelerdir; garanti değildir. Eksik, eski veya kapanmamış mumda karar BEKLE olur. Ücret, kayma ve kaldıraç etkisi dahil değildir.</footer>
+<script>
+const API='https://www.okx.com', $=id=>document.getElementById(id);
+let instruments=[],selected='BTC-USDT-SWAP',bars=[],framesData={},timer;
+// Hibrit tarayıcı: REST ile toplu sıralama, WebSocket ile ilk 30 adayın işlem akışı.
+const WS_URL='wss://ws.okx.com:8443/ws/v5/public';
+let hybridSocket=null,hybridTop=[],hybridSubscribed=new Set(),hybridTrades=new Map(),microBars=[],hybridTimer=null,hybridReconnect=null;
+
+const fmt=(v,d=5)=>Number.isFinite(+v)?(+v).toLocaleString('en-US',{maximumFractionDigits:d}):'—';
+async function get(path){let r=await fetch(API+path,{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);let j=await r.json();if(j.code!=='0')throw Error(j.msg||'OKX API');return j.data||[]}
+function status(t,ok=false){$('status').textContent=t;$('status').className=ok?'g':'y'}
+async function loadCoins(){let d=await get('/api/v5/public/instruments?instType=SWAP');instruments=d.filter(x=>x.settleCcy==='USDT'&&x.state==='live'&&x.instId.endsWith('-USDT-SWAP')).sort((a,b)=>a.instId.localeCompare(b.instId));$('count').textContent=instruments.length;renderCoins()}
+function renderCoins(){let q=$('search').value.trim().toUpperCase(),a=instruments.filter(x=>x.instId.includes(q)).slice(0,200);$('coins').innerHTML=a.map(x=>`<div class="item ${x.instId===selected?'selected':''}" data-id="${x.instId}"><div><b>${x.instId.replace('-USDT-SWAP','')}</b><small>USDT-SWAP</small></div><span class="tag">Açık</span></div>`).join('');$('coins').querySelectorAll('.item').forEach(e=>e.onclick=()=>{selected=e.dataset.id;renderCoins();refresh()})}
+function ema(a,p){let k=2/(p+1),o=[];a.forEach((v,i)=>o.push(i?v*k+o[i-1]*(1-k):v));return o}
+function rsi(a,p=14){if(a.length<=p)return NaN;let g=0,l=0;for(let i=1;i<=p;i++){let d=a[i]-a[i-1];if(d>0)g+=d;else l-=d}g/=p;l/=p;for(let i=p+1;i<a.length;i++){let d=a[i]-a[i-1];g=(g*(p-1)+Math.max(d,0))/p;l=(l*(p-1)+Math.max(-d,0))/p}return l===0?100:100-100/(1+g/l)}
+const ms={'5m':300000,'15m':900000,'1H':3600000,'4H':14400000};
+function assess(data,tf){if(data.length<60)return{dir:'BEKLE',early:'BEKLE',ready:false,why:'Yetersiz veri'};
+let c=data.map(x=>x.c),e20=ema(c,20),e50=ema(c,50),last=c.at(-1),r=rsi(c),volAvg=data.slice(-21,-1).reduce((s,x)=>s+x.v,0)/20,volOk=data.at(-1).v>volAvg*1.15;
+let end=data.at(-1),age=Date.now()-(end.ts+ms[tf]),fresh=end.confirm==='1'&&age>=-120000&&age<ms[tf]*2;
+let up=last>e20.at(-1)&&e20.at(-1)>e50.at(-1)&&r>=50&&r<=72&&volOk,down=last<e20.at(-1)&&e20.at(-1)<e50.at(-1)&&r>=28&&r<=50&&volOk;
+let early='BEKLE';if(fresh&&last>e20.at(-1)&&e20.at(-1)>e20.at(-4)&&r>=45&&r<65)early='YÜKSELİŞ HAZIRLIĞI';if(fresh&&last<e20.at(-1)&&e20.at(-1)<e20.at(-4)&&r>35&&r<=55)early='DÜŞÜŞ HAZIRLIĞI';
+return{dir:!fresh?'BEKLE':up?'LONG':down?'SHORT':'BEKLE',early,ready:fresh,why:!fresh?'Tamamlanmış mum yok':up?'Yukarı yön ve hacim uyumlu':down?'Aşağı yön ve hacim uyumlu':'Koşullar tamam değil',r,e20:e20.at(-1),e50:e50.at(-1),volOk}}
+function atr(data){let a=data.slice(-15);if(a.length<2)return NaN;let tr=a.slice(1).map((b,i)=>Math.max(b.h-b.l,Math.abs(b.h-a[i].c),Math.abs(b.l-a[i].c)));return tr.reduce((s,x)=>s+x,0)/tr.length}
+function chart(data){let c=$('chart'),x=c.getContext('2d'),w=c.clientWidth,h=c.clientHeight,d=window.devicePixelRatio||1;c.width=w*d;c.height=h*d;x.scale(d,d);x.clearRect(0,0,w,h);if(!data.length)return;let pad=60,lo=Math.min(...data.map(b=>b.l)),hi=Math.max(...data.map(b=>b.h)),rg=hi-lo||1,step=(w-pad-8)/data.length,y=v=>10+(hi-v)/rg*(h-30);x.font='10px system-ui';x.fillStyle='#8fa0b8';for(let i=0;i<5;i++){let yy=10+(h-30)*i/4;x.strokeStyle='#1d2a3d';x.beginPath();x.moveTo(5,yy);x.lineTo(w-pad,yy);x.stroke();x.fillText(fmt(hi-rg*i/4,4),w-pad+5,yy+3)}data.forEach((b,i)=>{let xx=5+i*step+step/2,col=b.c>=b.o?'#20c997':'#ff647c';x.strokeStyle=col;x.fillStyle=col;x.beginPath();x.moveTo(xx,y(b.h));x.lineTo(xx,y(b.l));x.stroke();x.fillRect(xx-Math.max(1,step*.28),y(Math.max(b.o,b.c)),Math.max(2,step*.56),Math.max(1,Math.abs(y(b.o)-y(b.c))))});let cl=data.map(b=>b.c),a=ema(cl,20),z=ema(cl,50);for(let [v,col] of [[a,'#f5c451'],[z,'#69a7ff']]){x.beginPath();x.strokeStyle=col;v.forEach((n,i)=>{let xx=5+i*step+step/2;i?x.lineTo(xx,y(n)):x.moveTo(xx,y(n))});x.stroke()}}
+function color(el,t){el.textContent=t;el.className=t==='LONG'?'g':t==='SHORT'?'r':'y'}
+function analyse(){let names=['5m','15m','1H','4H'],r=names.map(t=>assess(framesData[t]||[],t));['tf5','tf15','tf1h','tf4h'].forEach((id,i)=>color($(id),r[i].dir));let L=r.filter(x=>x.dir==='LONG').length,S=r.filter(x=>x.dir==='SHORT').length,decision='BEKLE',early='BEKLE';if(L>=3&&r[2].dir==='LONG')decision='LONG';if(S>=3&&r[2].dir==='SHORT')decision='SHORT';if(L>=2&&r.some(x=>x.early==='YÜKSELİŞ HAZIRLIĞI'))early='YÜKSELİŞ HAZIRLIĞI';if(S>=2&&r.some(x=>x.early==='DÜŞÜŞ HAZIRLIĞI'))early='DÜŞÜŞ HAZIRLIĞI';color($('decision'),decision);$('early').textContent=early;$('early').className=early.startsWith('YÜK')?'g':early.startsWith('DÜŞ')?'r':'y';color($('consensus'),decision);
+let active=assess(bars,$('timeframe').value);$('rsi').textContent=fmt(active.r,1);$('emas').textContent=fmt(active.e20,6)+' / '+fmt(active.e50,6);$('volumecheck').textContent=active.volOk?'Güçlü':'Zayıf';let a=atr(bars),last=bars.at(-1)?.c,ok=decision!=='BEKLE'&&r.every(x=>x.ready)&&Number.isFinite(a);$('entry').textContent=ok?fmt(last,8):'—';$('stop').textContent=ok?fmt(decision==='LONG'?last-1.5*a:last+1.5*a,8):'—';$('tp1').textContent=ok?fmt(decision==='LONG'?last+1.5*a:last-1.5*a,8):'—';$('tp2').textContent=ok?fmt(decision==='LONG'?last+2.5*a:last-2.5*a,8):'—';$('multiReason').textContent=`LONG ${L}/4 • SHORT ${S}/4 • 1 saat: ${r[2].dir}. Erken uyarı giriş emri değildir.`;$('reason').textContent= !r.every(x=>x.ready)?'Eksik/eski/kapanmamış zaman dilimi var. Güvenlik için BEKLE.':decision==='BEKLE'?'İşlem teyidi yok. '+r.map((x,i)=>names[i]+': '+x.why).join(' • '):`En az 3/4 zaman dilimi ${decision} ve 1 saat teyidi var. Seviyeler son kapanmış mum ve ATR ile yaklaşık hesaplandı.`;$('reason').textContent+=' Ücret, kayma ve kaldıraç etkisi dahil değildir.';if(!r.every(x=>x.ready)){color($('decision'),'BEKLE');color($('consensus'),'BEKLE');['entry','stop','tp1','tp2'].forEach(id=>$(id).textContent='—')}}
+async function refresh(){try{status('OKX verisi alınıyor…');let tfs=['5m','15m','1H','4H'],d=await Promise.all([get('/api/v5/market/ticker?instId='+selected),get('/api/v5/public/mark-price?instType=SWAP&instId='+selected),get('/api/v5/public/funding-rate?instId='+selected),...tfs.map(tf=>get('/api/v5/market/candles?instId='+selected+'&bar='+tf+'&limit=150'))]);let ticker=d[0][0],mark=d[1][0],fund=d[2][0];if(!ticker)throw Error('Ticker verisi yok');tfs.forEach((tf,i)=>framesData[tf]=d[i+3].slice().reverse().filter(a=>a[8]==='1').map(a=>({ts:+a[0],o:+a[1],h:+a[2],l:+a[3],c:+a[4],v:+a[7],confirm:a[8]})));bars=framesData[$('timeframe').value]||[];if(bars.length<60)throw Error('Tamamlanmış mum verisi yetersiz');let p=+ticker.last,pc=(p/+ticker.open24h-1)*100;$('coin').textContent=selected;$('price').textContent=fmt(p,8);$('change').textContent=(pc>=0?'+':'')+fmt(pc,2)+'%';$('mark').textContent=fmt(mark?.markPx,8);$('vol').textContent=fmt(ticker.volCcy24h,2);$('funding').textContent=fund?fmt(+fund.fundingRate*100,4)+'%':'—';$('updated').textContent=new Date(+ticker.ts).toLocaleTimeString('tr-TR');chart(bars);analyse();status('OKX bağlantısı aktif • Mum kapanışları kontrol edildi',true)}catch(e){status('Veri alınamadı: '+e.message);color($('decision'),'BEKLE');color($('consensus'),'BEKLE');$('reason').textContent='Veri alınamadı. Veri düzelmeden sinyal gösterilmeyecek.';['entry','stop','tp1','tp2'].forEach(id=>$(id).textContent='—')}}
+
+function hStatus(t,ok=false){$('hybridStatus').textContent=t;$('hybridStatus').className=ok?'g':'y'}
+function scoreTicker(t){
+ const last=+t.last,open=+t.open24h,vol=+t.volCcy24h;
+ if(!(last>0&&open>0))return null;
+ const change=(last/open-1)*100;
+ // Likiditeyi ve hareketi birlikte dikkate alan sıralama; sinyal/öngörü değildir.
+ const liquidity=Math.min(35,Math.log10(Math.max(1,vol))*3.2);
+ const movement=Math.min(45,Math.abs(change)*4);
+ const activity=Math.min(20,Math.log10(Math.max(1,+t.vol24h))*2);
+ return {id:t.instId,last,change,vol,score:liquidity+movement+activity};
+}
+function renderHybrid(){
+ const list=$('hybridList');if(!list)return;
+ list.innerHTML=hybridTop.slice(0,10).map((x,i)=>`<div class="hybriditem ${x.id===selected?'active':''}" data-id="${x.id}">
+ <span><b>${i+1}. ${x.id.replace('-USDT-SWAP','')}</b><small>${x.change>=0?'+':''}${fmt(x.change,2)}% • Hacim ${fmt(x.vol,0)} USDT</small></span>
+ <b class="${x.change>=0?'g':'r'}">${fmt(x.score,0)}</b></div>`).join('');
+ list.querySelectorAll('.hybriditem').forEach(el=>el.onclick=()=>{selected=el.dataset.id;renderCoins();renderHybrid();refresh()});
+}
+function wsSubscribe(ids,op){
+ if(!hybridSocket||hybridSocket.readyState!==1||!ids.length)return;
+ const args=ids.map(instId=>({channel:'trades',instId}));
+ for(let i=0;i<args.length;i+=20)hybridSocket.send(JSON.stringify({op,args:args.slice(i,i+20)}));
+}
+function connectHybrid(){
+ if(hybridSocket&&[WebSocket.OPEN,WebSocket.CONNECTING].includes(hybridSocket.readyState))return;
+ hybridSocket=new WebSocket(WS_URL);
+ hybridSocket.onopen=()=>{
+  hStatus('WebSocket bağlı',true);
+  const ids=hybridTop.slice(0,30).map(x=>x.id);
+  hybridSubscribed=new Set(ids);wsSubscribe(ids,'subscribe');
+ };
+ hybridSocket.onmessage=e=>{
+  let msg;try{msg=JSON.parse(e.data)}catch{return}
+  if(msg.arg?.channel!=='trades'||!msg.data)return;
+  for(const t of msg.data){
+   const id=t.instId,px=+t.px,ts=+t.ts,sz=+t.sz;
+   if(!(px>0&&ts>0))continue;
+   let arr=hybridTrades.get(id)||[];
+   arr.push({p:px,ts,sz,side:t.side});
+   while(arr.length&&arr[0].ts<Date.now()-90000)arr.shift();
+   hybridTrades.set(id,arr);
+   if(id===selected)updateMicro(arr);
+  }
+ };
+ hybridSocket.onerror=()=>hStatus('WebSocket bağlantı sorunu');
+ hybridSocket.onclose=()=>{
+  hStatus('Yeniden bağlanıyor');
+  hybridSubscribed.clear();
+  if(hybridReconnect)clearTimeout(hybridReconnect);
+  hybridReconnect=setTimeout(connectHybrid,4000);
+ };
+}
+function updateHybridSubscriptions(){
+ if(!hybridSocket||hybridSocket.readyState!==1)return;
+ const next=new Set(hybridTop.slice(0,30).map(x=>x.id));
+ const remove=[...hybridSubscribed].filter(id=>!next.has(id));
+ const add=[...next].filter(id=>!hybridSubscribed.has(id));
+ wsSubscribe(remove,'unsubscribe');wsSubscribe(add,'subscribe');hybridSubscribed=next;
+}
+function drawMicro(){
+ const c=$('microChart');if(!c)return;
+ const x=c.getContext('2d'),w=c.clientWidth||260,h=c.clientHeight||105,d=devicePixelRatio||1;
+ c.width=w*d;c.height=h*d;x.setTransform(d,0,0,d,0,0);x.clearRect(0,0,w,h);
+ if(microBars.length<2)return;
+ const vals=microBars.slice(-90),lo=Math.min(...vals.map(b=>b.l)),hi=Math.max(...vals.map(b=>b.h)),range=hi-lo||hi*.00001;
+ const y=v=>5+(hi-v)/range*(h-10),step=(w-10)/(vals.length-1);
+ x.strokeStyle='#69a7ff';x.lineWidth=1.5;x.beginPath();
+ vals.forEach((b,i)=>{const xx=5+i*step;i?x.lineTo(xx,y(b.c)):x.moveTo(xx,y(b.c))});x.stroke();
+}
+function updateMicro(trades){
+ const now=Date.now(),recent=trades.filter(t=>t.ts>now-15000);
+ if(!recent.length)return;
+ const bySec=new Map();
+ for(const t of recent){
+  const sec=Math.floor(t.ts/1000)*1000;let b=bySec.get(sec);
+  if(!b)b={ts:sec,o:t.p,h:t.p,l:t.p,c:t.p,v:0,buy:0,sell:0};
+  b.h=Math.max(b.h,t.p);b.l=Math.min(b.l,t.p);b.c=t.p;b.v+=t.sz*t.p;
+  if(t.side==='buy')b.buy+=t.sz*t.p;else if(t.side==='sell')b.sell+=t.sz*t.p;
+  bySec.set(sec,b);
+ }
+ microBars=[...bySec.values()].sort((a,b)=>a.ts-b.ts).slice(-90);
+ const pct=(arr)=>arr.length>1?(arr.at(-1).p/arr[0].p-1)*100:0;
+ const s1=recent.filter(t=>t.ts>now-1000),s5=recent.filter(t=>t.ts>now-5000);
+ const buy=s5.filter(t=>t.side==='buy').reduce((a,t)=>a+t.sz*t.p,0),sell=s5.filter(t=>t.side==='sell').reduce((a,t)=>a+t.sz*t.p,0);
+ $('hybridCandle').textContent=microBars.length+' adet';
+ $('micro1').textContent=s1.length?pct(s1).toFixed(3)+'%':'—';
+ $('micro5').textContent=s5.length?pct(s5).toFixed(3)+'%':'—';
+ $('microFlow').textContent=buy+sell?(100*buy/(buy+sell)).toFixed(0)+'%':'—';
+ const move=pct(s5),alert=s5.length>=3&&Math.abs(move)>=0.18?(move>0?'HIZLI YÜKSELİŞ':'HIZLI DÜŞÜŞ'):'BEKLE';
+ $('hybridAlert').textContent=alert+' • Son 5 sn '+s5.length+' işlem; tek başına sinyal değildir.';
+ $('hybridAlert').className='note '+(alert==='HIZLI YÜKSELİŞ'?'g':alert==='HIZLI DÜŞÜŞ'?'r':'y');
+ drawMicro();
+}
+async function scanHybrid(){
+ try{
+  hStatus('Piyasa taranıyor');
+  const [tickerData]=await Promise.all([get('/api/v5/market/tickers?instType=SWAP')]);
+  const valid=new Set(instruments.map(x=>x.instId));
+  hybridTop=tickerData.filter(t=>valid.has(t.instId)).map(scoreTicker).filter(Boolean).sort((a,b)=>b.score-a.score).slice(0,30);
+  $('hybridCount').textContent=instruments.length;$('hybridWatch').textContent=hybridTop.length;
+  renderHybrid();updateHybridSubscriptions();
+  hStatus('Tarama güncel',true);
+ }catch(e){hStatus('Tarama hatası: '+e.message)}
+}
+function startHybrid(){
+ connectHybrid();scanHybrid();
+ if(hybridTimer)clearInterval(hybridTimer);
+ hybridTimer=setInterval(scanHybrid,30000);
+}
+
+$('search').oninput=()=>{renderCoins();};$('timeframe').onchange=refresh;$('refresh').onclick=refresh;window.onresize=()=>{chart(bars);drawMicro()};
+(async()=>{try{await loadCoins();startHybrid();await refresh();timer=setInterval(refresh,20000)}catch(e){status('OKX bağlantısı kurulamadı: '+e.message)}})();
+</script></body></html>
