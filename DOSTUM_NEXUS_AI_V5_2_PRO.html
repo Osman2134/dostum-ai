@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DOSTUM AI TRADER V5.2 PRO ZOOM</title>
+<style>
+:root{color-scheme:dark;--bg:#080e18;--panel:#101a2a;--line:#26364d;--muted:#9aabc2;--green:#20c997;--red:#ff647c;--gold:#f5c451;--blue:#69a7ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#edf3fb;font:14px system-ui,-apple-system,sans-serif}
+header{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.brand{font-size:20px;font-weight:850}.brand em{font-style:normal;color:var(--green)}.muted,.note{color:var(--muted)}main{max-width:1450px;margin:auto;padding:14px;display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:12px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:13px;min-width:0}
+.toolbar,.zoomrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:11px}
+input,select,button{background:#0a1423;color:#edf3fb;border:1px solid #30415a;border-radius:8px;padding:9px;font:inherit}
+input{min-width:120px;flex:1}button{cursor:pointer}button:hover{border-color:var(--blue)}button.primary{background:#123a35;border-color:#226e60}
+.head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.coin{font-weight:800;font-size:19px}.price{font-size:25px;font-weight:850}
+.tag{font-size:10px;border:1px solid var(--line);padding:4px 7px;border-radius:6px;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:11px 0}
+.stat,.signal{background:#0a1423;border:1px solid var(--line);border-radius:9px;padding:9px;min-width:0}
+.stat small,.signal small{display:block;color:var(--muted);font-size:11px}.stat b,.signal b{display:block;margin-top:4px;overflow-wrap:anywhere}
+.chartbox{height:410px;background:#08111d;border:1px solid var(--line);border-radius:9px;overflow:hidden;position:relative}
+canvas{display:block;width:100%;height:100%}.zoomrow label{color:var(--muted);font-size:12px}.zoomrow input[type=range]{flex:1;min-width:110px;padding:0}
+.indicators{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}
+.indicator{height:125px;background:#08111d;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.signalrow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:9px}
+.g{color:var(--green)}.r{color:var(--red)}.y{color:var(--gold)}
+.list{max-height:650px;overflow:auto}.item{display:flex;justify-content:space-between;padding:9px;border-bottom:1px solid #1e2b3d;cursor:pointer}.item:hover,.item.active{background:#1a2b42}
+.item small{display:block;color:var(--muted);font-size:10px}.note{font-size:11px;line-height:1.5;margin-top:9px}
+@media(max-width:900px){main{grid-template-columns:1fr}.list{max-height:240px}}
+@media(max-width:560px){main{padding:8px}.stats,.signalrow{grid-template-columns:repeat(2,1fr)}.chartbox{height:330px}.indicators{grid-template-columns:1fr}.indicator{height:110px}header{padding:12px}}
+</style>
+</head>
+<body>
+<header><div><div class="brand">DOSTUM AI <em>V5.2 PRO ZOOM</em></div><div class="muted">Önce sermayeyi koru, sonra kazancı ara</div></div><div id="status" class="y">Bağlantı hazırlanıyor…</div></header>
+<main>
+<section class="panel">
+ <div class="toolbar">
+  <input id="search" placeholder="Coin ara (BTC, DOGE…)">
+  <select id="tf"><option value="5m">5 dakika</option><option value="15m">15 dakika</option><option value="1H">1 saat</option><option value="4H">4 saat</option></select>
+  <button id="refresh" class="primary">Yenile</button>
+ </div>
+ <div class="head"><div><div id="coin" class="coin">BTC-USDT-SWAP</div><span id="price" class="price">—</span> <span id="change" class="muted">—</span></div><span class="tag">SADECE VERİ • OTOMATİK EMİR YOK</span></div>
+ <div class="stats">
+  <div class="stat"><small>Mark fiyatı</small><b id="mark">—</b></div><div class="stat"><small>24s hacim</small><b id="vol">—</b></div><div class="stat"><small>Fonlama</small><b id="funding">—</b></div><div class="stat"><small>Son güncelleme</small><b id="updated">—</b></div>
+ </div>
+ <div class="zoomrow">
+  <button id="minus" aria-label="Uzaklaştır">−</button><button id="plus" aria-label="Yakınlaştır">+</button>
+  <label for="zoom">Mum sayısı: <b id="zoomLabel">100</b></label>
+  <input id="zoom" type="range" min="25" max="150" step="5" value="100">
+  <button id="reset">Varsayılan</button>
+ </div>
+ <div class="chartbox"><canvas id="priceChart"></canvas></div>
+ <div class="indicators"><div class="indicator"><canvas id="rsiChart"></canvas></div><div class="indicator"><canvas id="macdChart"></canvas></div></div>
+ <div class="signalrow">
+  <div class="signal"><small>Karar</small><b id="decision" class="y">BEKLE</b></div><div class="signal"><small>RSI 14</small><b id="rsi">—</b></div><div class="signal"><small>EMA 20 / 50</small><b id="ema">—</b></div><div class="signal"><small>Hacim</small><b id="volcheck">—</b></div>
+ </div>
+ <div class="signalrow">
+  <div class="signal"><small>Giriş referansı</small><b id="entry">—</b></div><div class="signal"><small>Stop referansı</small><b id="stop">—</b></div><div class="signal"><small>Hedef 1</small><b id="tp1">—</b></div><div class="signal"><small>Hedef 2</small><b id="tp2">—</b></div>
+ </div>
+ <div id="reason" class="note">Veri bekleniyor.</div>
+</section>
+<aside class="panel"><b>OKX USDT SÜREKLİ VADELİ</b><div class="note"><span id="count">—</span> açık sözleşme</div><div id="coins" class="list"></div><div class="note">Liste OKX halka açık piyasa verisinden gelir. İşlemler otomatik açılmaz.</div></aside>
+</main>
+<footer class="note" style="max-width:1450px;margin:auto;padding:0 14px 18px">Yatırım tavsiyesi değildir. Teknik sinyaller deneysel değerlendirmelerdir, garanti değildir. Eksik veya eski veride karar BEKLE olur. Komisyon, kayma ve kaldıraç etkisi ayrıca hesaba katılmalıdır.</footer>
+<script>
+const API='https://www.okx.com', $=id=>document.getElementById(id);
+let instruments=[],selected='BTC-USDT-SWAP',allBars=[],visibleBars=[],refreshTimer=null;
+let zoomCount=100;
+const fmt=(v,d=5)=>Number.isFinite(+v)?(+v).toLocaleString('en-US',{maximumFractionDigits:d}):'—';
+const intervals={'5m':300000,'15m':900000,'1H':3600000,'4H':14400000};
+async function get(path){const r=await fetch(API+path,{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);const j=await r.json();if(j.code!=='0')throw Error(j.msg||'OKX API');return j.data||[]}
+function setStatus(t,ok=false){$('status').textContent=t;$('status').className=ok?'g':'y'}
+function renderCoins(){const q=$('search').value.trim().toUpperCase();const arr=instruments.filter(x=>x.instId.includes(q)).slice(0,250);$('coins').innerHTML=arr.map(x=>`<div class="item ${x.instId===selected?'active':''}" data-id="${x.instId}"><span><b>${x.instId.replace('-USDT-SWAP','')}</b><small>USDT-SWAP</small></span><span class="muted">Açık</span></div>`).join('');$('coins').querySelectorAll('.item').forEach(el=>el.onclick=()=>{selected=el.dataset.id;renderCoins();refresh()})}
+function ema(a,p){if(!a.length)return[];const k=2/(p+1),o=[];a.forEach((v,i)=>o.push(i?v*k+o[i-1]*(1-k):v));return o}
+function rsiSeries(a,p=14){let out=Array(a.length).fill(null);if(a.length<=p)return out;let g=0,l=0;for(let i=1;i<=p;i++){let d=a[i]-a[i-1];if(d>0)g+=d;else l-=d}g/=p;l/=p;out[p]=l===0?100:100-100/(1+g/l);for(let i=p+1;i<a.length;i++){let d=a[i]-a[i-1];g=(g*(p-1)+Math.max(d,0))/p;l=(l*(p-1)+Math.max(-d,0))/p;out[i]=l===0?100:100-100/(1+g/l)}return out}
+function macdSeries(a){const e12=ema(a,12),e26=ema(a,26),line=a.map((_,i)=>e12[i]-e26[i]),sig=ema(line,9);return{line,sig,hist:line.map((v,i)=>v-sig[i])}}
+function setupCanvas(c){const w=c.clientWidth,h=c.clientHeight,d=window.devicePixelRatio||1;c.width=Math.max(1,Math.floor(w*d));c.height=Math.max(1,Math.floor(h*d));const x=c.getContext('2d');x.setTransform(d,0,0,d,0,0);return{x,w,h}}
+function drawPrice(data){const {x,w,h}=setupCanvas($('priceChart'));x.clearRect(0,0,w,h);if(!data.length)return;const padR=68,padL=7,top=12,bottom=18;const lo=Math.min(...data.map(b=>b.l)),hi=Math.max(...data.map(b=>b.h)),range=hi-lo||1;const y=v=>top+(hi-v)/range*(h-top-bottom),plotW=w-padR-padL,step=plotW/data.length; x.font='10px system-ui';x.fillStyle='#9aabc2';for(let i=0;i<=4;i++){const yy=top+(h-top-bottom)*i/4;x.strokeStyle='#1e2b3d';x.beginPath();x.moveTo(padL,yy);x.lineTo(w-padR,yy);x.stroke();x.fillText(fmt(hi-range*i/4,5),w-padR+5,yy+3)}
+data.forEach((b,i)=>{const xx=padL+i*step+step/2,col=b.c>=b.o?'#20c997':'#ff647c';x.strokeStyle=col;x.fillStyle=col;x.lineWidth=1;x.beginPath();x.moveTo(xx,y(b.h));x.lineTo(xx,y(b.l));x.stroke();const bw=Math.max(1,step*.58);x.fillRect(xx-bw/2,y(Math.max(b.o,b.c)),bw,Math.max(1,Math.abs(y(b.o)-y(b.c))))});
+const closes=data.map(b=>b.c),e20=ema(closes,20),e50=ema(closes,50);[[e20,'#f5c451'],[e50,'#69a7ff']].forEach(([arr,col])=>{x.strokeStyle=col;x.lineWidth=1.4;x.beginPath();arr.forEach((v,i)=>{const xx=padL+i*step+step/2;i?x.lineTo(xx,y(v)):x.moveTo(xx,y(v))});x.stroke()});
+// Confirmed candle crossover markers, aligned to the same visible candle index.
+const marks=signalMarkers(closes,e20,e50);
+marks.forEach(m=>{const b=data[m.i],xx=padL+m.i*step+step/2,yy=m.type==='BUY'?y(b.l)+13:y(b.h)-13;x.fillStyle=m.type==='BUY'?'#20c997':'#ff647c';x.beginPath();x.arc(xx,yy,4,0,Math.PI*2);x.fill();x.font='bold 9px system-ui';x.fillText(m.type,Math.max(2,xx-11),m.type==='BUY'?yy+14:yy-8)});
+}
+function signalMarkers(c,e20,e50){const a=[];for(let i=2;i<c.length;i++){if(c[i-1]<=e20[i-1]&&c[i]>e20[i]&&e20[i]>e50[i])a.push({i,type:'BUY'});else if(c[i-1]>=e20[i-1]&&c[i]<e20[i]&&e20[i]<e50[i])a.push({i,type:'SELL'})}return a}
+function drawRSI(data){const {x,w,h}=setupCanvas($('rsiChart'));x.clearRect(0,0,w,h);const vals=rsiSeries(data.map(b=>b.c));const start=Math.max(0,vals.length-visibleBars.length),v=vals.slice(start);const left=5,top=8,bottom=17,plotH=h-top-bottom,step=(w-10)/Math.max(1,v.length-1);const y=n=>top+(100-n)/100*plotH;x.font='10px system-ui';x.fillStyle='#9aabc2';[30,50,70].forEach(n=>{x.strokeStyle=n===50?'#30415a':'#26364d';x.beginPath();x.setLineDash([3,3]);x.moveTo(left,y(n));x.lineTo(w-5,y(n));x.stroke();x.setLineDash([]);x.fillText(n,6,y(n)-3)});x.strokeStyle='#b58cff';x.lineWidth=1.5;x.beginPath();let begun=false;v.forEach((n,i)=>{if(n==null)return;const xx=left+i*step;if(!begun){x.moveTo(xx,y(n));begun=true}else x.lineTo(xx,y(n))});x.stroke();x.fillStyle='#9aabc2';x.fillText('RSI 14',w-48,12)}
+function drawMACD(data){const {x,w,h}=setupCanvas($('macdChart'));x.clearRect(0,0,w,h);const m=macdSeries(data.map(b=>b.c));const start=Math.max(0,m.hist.length-visibleBars.length),hist=m.hist.slice(start),line=m.line.slice(start),sig=m.sig.slice(start);if(!hist.length)return;const max=Math.max(...hist.map(Math.abs),...line.map(Math.abs),.000001),mid=h/2,scale=(h*.39)/max,step=(w-10)/hist.length;x.strokeStyle='#30415a';x.beginPath();x.moveTo(5,mid);x.lineTo(w-5,mid);x.stroke();hist.forEach((v,i)=>{x.fillStyle=v>=0?'#20c997':'#ff647c';x.fillRect(5+i*step,mid,Math.max(1,step*.65),-v*scale)});[[line,'#69a7ff'],[sig,'#f5c451']].forEach(([a,col])=>{x.strokeStyle=col;x.lineWidth=1.3;x.beginPath();a.forEach((v,i)=>{const xx=5+i*step+step/2,yy=mid-v*scale;i?x.lineTo(xx,yy):x.moveTo(xx,yy)});x.stroke()});x.fillStyle='#9aabc2';x.font='10px system-ui';x.fillText('MACD 12/26/9',8,12)}
+function redraw(){visibleBars=allBars.slice(-zoomCount);$('zoomLabel').textContent=zoomCount;drawPrice(visibleBars);drawRSI(allBars);drawMACD(allBars);updateAnalysis()}
+function atr(data){const a=data.slice(-15);if(a.length<2)return NaN;const tr=a.slice(1).map((b,i)=>Math.max(b.h-b.l,Math.abs(b.h-a[i].c),Math.abs(b.l-a[i].c)));return tr.reduce((s,v)=>s+v,0)/tr.length}
+function updateAnalysis(){const data=visibleBars;if(data.length<55)return;const c=data.map(b=>b.c),e20=ema(c,20),e50=ema(c,50),r=rsiSeries(c),last=data.at(-1),avgVol=data.slice(-21,-1).reduce((s,b)=>s+b.v,0)/20,volOK=last.v>avgVol*1.15,rNow=r.at(-1);const long=last.c>e20.at(-1)&&e20.at(-1)>e50.at(-1)&&rNow>=50&&rNow<=72&&volOK,short=last.c<e20.at(-1)&&e20.at(-1)<e50.at(-1)&&rNow>=28&&rNow<=50&&volOK;const decision=long?'LONG':short?'SHORT':'BEKLE';$('decision').textContent=decision;$('decision').className=long?'g':short?'r':'y';$('rsi').textContent=fmt(rNow,1);$('ema').textContent=fmt(e20.at(-1),6)+' / '+fmt(e50.at(-1),6);$('volcheck').textContent=volOK?'Güçlü':'Zayıf';const a=atr(data),entry=last.c,ready=decision!=='BEKLE'&&Number.isFinite(a);$('entry').textContent=ready?fmt(entry,8):'—';$('stop').textContent=ready?fmt(long?entry-1.5*a:entry+1.5*a,8):'—';$('tp1').textContent=ready?fmt(long?entry+1.5*a:entry-1.5*a,8):'—';$('tp2').textContent=ready?fmt(long?entry+2.5*a:entry-2.5*a,8):'—';$('reason').textContent=ready?'Teknik koşullar aynı zaman diliminde uyumlu. Seviyeler ATR tabanlı yaklaşık referanslardır; emir değildir.':'Koşullar tamam değil. Güvenlik gereği BEKLE. Giriş/stop/hedef gösterilmiyor.'}
+async function loadInstruments(){const d=await get('/api/v5/public/instruments?instType=SWAP');instruments=d.filter(x=>x.settleCcy==='USDT'&&x.state==='live'&&x.instId.endsWith('-USDT-SWAP')).sort((a,b)=>a.instId.localeCompare(b.instId));$('count').textContent=instruments.length;renderCoins()}
+async function refresh(){try{setStatus('OKX verisi alınıyor…');const [tick,mark,fund,candles]=await Promise.all([get('/api/v5/market/ticker?instId='+selected),get('/api/v5/public/mark-price?instType=SWAP&instId='+selected),get('/api/v5/public/funding-rate?instId='+selected),get('/api/v5/market/candles?instId='+selected+'&bar='+$('tf').value+'&limit=150')]);if(!tick[0]||candles.length<55)throw Error('Yeterli mum verisi yok');const t=tick[0],p=+t.last,pc=(p/+t.open24h-1)*100;$('coin').textContent=selected;$('price').textContent=fmt(p,8);$('change').textContent=(pc>=0?'+':'')+fmt(pc,2)+'%';$('mark').textContent=fmt(mark[0]?.markPx,8);$('vol').textContent=fmt(t.volCcy24h,2);$('funding').textContent=fund[0]?fmt(+fund[0].fundingRate*100,4)+'%':'—';$('updated').textContent=new Date(+t.ts).toLocaleTimeString('tr-TR');allBars=candles.slice().reverse().filter(a=>a[8]==='1').map(a=>({ts:+a[0],o:+a[1],h:+a[2],l:+a[3],c:+a[4],v:+a[7]}));if(allBars.length<55)throw Error('Kapanmış mum sayısı yetersiz');redraw();setStatus('OKX bağlantısı aktif • '+allBars.length+' kapanmış mum',true)}catch(e){setStatus('Veri alınamadı: '+e.message);$('decision').textContent='BEKLE';$('decision').className='y';$('reason').textContent='Veri alınamadı. Veri düzelmeden sinyal üretilmeyecek.';['entry','stop','tp1','tp2'].forEach(id=>$(id).textContent='—')}}
+$('search').addEventListener('input',renderCoins);$('tf').addEventListener('change',refresh);$('refresh').onclick=refresh;
+$('zoom').oninput=e=>{zoomCount=+e.target.value;redraw()};$('plus').onclick=()=>{$('zoom').value=Math.max(25,zoomCount-5);zoomCount=+$('zoom').value;redraw()};$('minus').onclick=()=>{$('zoom').value=Math.min(150,zoomCount+5);zoomCount=+$('zoom').value;redraw()};$('reset').onclick=()=>{$('zoom').value=100;zoomCount=100;redraw()};
+window.addEventListener('resize',redraw);
+(async()=>{try{await loadInstruments();await refresh();refreshTimer=setInterval(refresh,20000)}catch(e){setStatus('Başlatılamadı: '+e.message)}})();
+</script>
+</body></html>
