@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DOSTUM NEXUS AI V5.7 - Mum OHLC ve Long Short</title>
+<style>
+:root{--bg:#080d16;--p:#111a29;--p2:#0b1422;--line:#27364c;--txt:#eaf1fb;--muted:#91a3bc;--g:#21d39b;--r:#ff647c;--y:#f4c84b;--b:#6daaff}
+*{box-sizing:border-box}body{margin:0;max-width:100%;overflow-x:hidden;background:linear-gradient(145deg,#070b12,#0b1525 60%,#080d16);color:var(--txt);font:14px system-ui}header{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.brand{font-size:21px;font-weight:850}.brand span{color:var(--g)}.sub,.muted,.note{color:var(--muted)}.sub{font-size:12px}main{width:100%;max-width:1500px;margin:auto;padding:14px;display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:13px;min-width:0}main>section,main>aside{min-width:0}.panel{background:linear-gradient(155deg,var(--p),#0d1624);border:1px solid var(--line);border-radius:13px;padding:13px;min-width:0}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}input,select,button{background:var(--p2);color:var(--txt);border:1px solid #31425b;border-radius:8px;padding:9px;font:inherit}input{flex:1;min-width:130px}button{cursor:pointer}.primary{background:#123b35;color:#9af1d7}.topline{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.coin{font-size:19px;font-weight:800}.price{font-size:25px;font-weight:850}.tag{border:1px solid var(--line);border-radius:6px;padding:4px 7px;color:var(--muted);font-size:10px}.stats,.signals{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:11px 0}.cell{background:var(--p2);border:1px solid var(--line);border-radius:9px;padding:9px;min-width:0}.cell small{display:block;color:var(--muted);font-size:10px}.cell b{display:block;margin-top:5px;font-size:13px;overflow-wrap:anywhere}.charttools{display:flex;align-items:center;gap:7px;margin:8px 0}.charttools input{flex:1;min-width:60px;padding:0;accent-color:var(--g)}.charttools button{padding:6px 10px}.chartwrap{height:390px;width:100%;max-width:100%;background:#080f1b;border:1px solid var(--line);border-radius:10px;overflow:hidden;touch-action:none;position:relative}.chartwrap canvas{width:100%;height:100%;display:block;touch-action:none}.ohlc-readout{position:absolute;left:8px;top:8px;z-index:2;max-width:calc(100% - 16px);padding:7px 9px;border:1px solid #31425b;border-radius:8px;background:rgba(8,15,27,.92);font-size:10px;line-height:1.55;color:#eaf1fb;pointer-events:none}.scenario-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.scenario{background:#0b1422;border:1px solid var(--line);border-radius:9px;padding:10px;min-width:0}.scenario h4{margin:0 0 7px;font-size:13px}.scenario p{margin:4px 0;font-size:11px;color:var(--muted)}.scenario b{color:var(--txt)}@media(max-width:560px){.chartwrap{height:330px}.scenario-grid{grid-template-columns:1fr}}.g{color:var(--g)}.r{color:var(--r)}.y{color:var(--y)}.note{font-size:11px;line-height:1.5;margin-top:8px}.list{max-height:600px;overflow:auto}.item{display:flex;justify-content:space-between;gap:8px;padding:9px;border-bottom:1px solid #1d2a3d;cursor:pointer}.item:hover,.item.active{background:#17263b}.item small{display:block;color:var(--muted);font-size:10px}.section{margin-top:12px;padding:11px;background:#0a1321;border:1px solid var(--line);border-radius:10px}.section h3{font-size:13px;margin:0 0 8px}.hybridstats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.hybridstats .cell{padding:7px}.hybridstats .cell b{font-size:12px}footer{max-width:1500px;margin:auto;padding:0 14px 18px;color:var(--muted);font-size:11px}@media(max-width:900px){main{grid-template-columns:1fr}.list{max-height:250px}}@media(max-width:560px){main{padding:8px}.stats,.signals{grid-template-columns:repeat(2,1fr)}.chartwrap{height:330px}header{padding:12px}}
+</style></head><body>
+<header><div><div class="brand">DOSTUM AI <span>V5</span></div><div class="sub">Onaylı dip/tepe • Erken dönüş • Trend takibi • OKX USDT-SWAP</div></div><div id="status" class="y">Bağlantı hazırlanıyor…</div></header>
+<main><section class="panel">
+<div class="toolbar"><input id="search" placeholder="Coin ara (BTC, DOGE…)"><select id="tf"><option value="5m">5 dakika</option><option value="15m">15 dakika</option><option value="1H" selected>1 saat</option><option value="4H">4 saat</option><option value="1D">1 gün</option></select><button id="refresh" class="primary">Yenile</button></div>
+<div class="topline"><div><div id="coin" class="coin">BTC-USDT-SWAP</div><span id="price" class="price">—</span> <span id="change" class="muted">—</span></div><span class="tag">SADECE VERİ • OTOMATİK EMİR YOK</span></div>
+<div class="stats"><div class="cell"><small>Mark fiyatı</small><b id="mark">—</b></div><div class="cell"><small>24s hacim</small><b id="vol">—</b></div><div class="cell"><small>Fonlama</small><b id="funding">—</b></div><div class="cell"><small>Veri zamanı</small><b id="updated">—</b></div></div>
+<div class="charttools"><button id="zoomOut">−</button><input id="zoom" type="range" min="30" max="160" value="100" aria-label="Görünen mum sayısı"><button id="zoomIn">+</button><button id="latest">Son mum</button><span id="zoomLabel" class="note">100 mum</span></div><div class="chartwrap"><canvas id="chart"></canvas><div id="ohlc" class="ohlc-readout">Muma dokun: O/H/L/C ve hacim bilgisi</div></div>
+<div class="section"><h3>CANLI DİP / TEPE SİNYALİ</h3><div class="signals"><div class="cell"><small>SON SİNYAL</small><b id="pivotSignal" class="y">SİNYAL BEKLENİYOR</b></div><div class="cell"><small>ONAY FİYATI</small><b id="pivotPrice">—</b></div><div class="cell"><small>SİNYAL ZAMANI</small><b id="pivotTime">—</b></div><div class="cell"><small>GEÇERSİZLEŞME</small><b id="pivotInvalid">—</b></div></div><div id="pivotReason" class="note">Dip ve tepe sinyali kapanmış mumlarla teyit edilir. Aday sinyal kesin dönüş değildir.</div></div>
+<div class="section"><h3>VERİ GÜVENLİĞİ / SAĞLIK KONTROLÜ</h3><div class="signals"><div class="cell"><small>VERİ DURUMU</small><b id="dataHealth" class="y">KONTROL BEKLENİYOR</b></div><div class="cell"><small>SON 5DK MUM</small><b id="lastCandleAge">—</b></div><div class="cell"><small>MUM BÜTÜNLÜĞÜ</small><b id="candleIntegrity">—</b></div><div class="cell"><small>SİNYAL KİLİDİ</small><b id="signalLock">AKTİF</b></div></div><div id="dataHealthReason" class="note">Her zaman dilimi ayrı doğrulanır. Şüpheli veya eski veri sinyal üretimini durdurur.</div></div>
+
+<div class="section"><h3>OKX MUM EŞLEŞTİRME / DENETİM TABLOSU</h3>
+<div class="note">Aynı OKX USDT-SWAP sözleşmesinin kapanmış mumları. OKX uygulamasında aynı sözleşme ve zaman dilimini seçerek mum zamanı + O/H/L/C değerlerini karşılaştır.</div>
+<div style="overflow-x:auto"><table id="auditTable" style="width:100%;border-collapse:collapse;font-size:10px;white-space:nowrap">
+<thead><tr><th style="text-align:left;padding:6px">TF</th><th style="text-align:left;padding:6px">Mum zamanı</th><th style="text-align:right;padding:6px">Açılış</th><th style="text-align:right;padding:6px">Yüksek</th><th style="text-align:right;padding:6px">Düşük</th><th style="text-align:right;padding:6px">Kapanış</th><th style="text-align:right;padding:6px">Hacim</th></tr></thead>
+<tbody id="auditRows"><tr><td colspan="7" style="padding:8px">Veri bekleniyor…</td></tr></tbody></table></div>
+<div class="note" id="auditMeta">Kaynak: OKX public market candles • Yalnızca kapanmış mumlar • Karşılaştırmada aynı mum zamanını kullan.</div>
+</div>
+
+<div class="signals"><div class="cell"><small>ANA KARAR</small><b id="decision" class="y">BEKLE</b></div><div class="cell"><small>DİP / TEPE</small><b id="zone" class="y">İZLENİYOR</b></div><div class="cell"><small>RSI 14</small><b id="rsi">—</b></div><div class="cell"><small>Supertrend</small><b id="trend">—</b></div></div>
+<div class="signals"><div class="cell"><small>Giriş referansı</small><b id="entry">—</b></div><div class="cell"><small>Trend stop çizgisi</small><b id="stop">—</b></div><div class="cell"><small>Hedef 1 (1.5R)</small><b id="tp1">—</b></div><div class="cell"><small>Hedef 2 (2.5R)</small><b id="tp2">—</b></div></div><div class="section"><h3>LONG + SHORT • 5 DK İŞLEM SİNYALİ / ÜST TF TEYİDİ</h3><div class="scenario-grid"><div class="scenario"><h4 class="g">▲ LONG SENARYOSU</h4><p>Durum: <b id="longState">—</b></p><p>Giriş: <b id="longEntry">—</b></p><p>Stop: <b id="longStop">—</b></p><p>Hedef 1: <b id="longTp1">—</b></p><p>Hedef 2: <b id="longTp2">—</b></p></div><div class="scenario"><h4 class="r">▼ SHORT SENARYOSU</h4><p>Durum: <b id="shortState">—</b></p><p>Giriş: <b id="shortEntry">—</b></p><p>Stop: <b id="shortStop">—</b></p><p>Hedef 1: <b id="shortTp1">—</b></p><p>Hedef 2: <b id="shortTp2">—</b></p></div></div><div class="note">Giriş, stop ve hedefler 5 dakikalık kapanmış mumlardan hesaplanır. 15dk, 1s, 4s ve 1g yalnızca yön teyidi verir. İki senaryonun birlikte görünmesi iki pozisyonun açılması gerektiği anlamına gelmez. Otomatik emir gönderilmez.</div></div>
+<div class="section"><h3>ÇOKLU ZAMAN DİLİMİ • DÖNÜŞ TEYİDİ</h3><div class="signals"><div class="cell"><small>5 dakika</small><b id="tf5" class="y">—</b></div><div class="cell"><small>15 dakika</small><b id="tf15" class="y">—</b></div><div class="cell"><small>1 saat</small><b id="tf1h" class="y">—</b></div><div class="cell"><small>4 saat</small><b id="tf4h" class="y">—</b></div><div class="cell"><small>1 gün</small><b id="tf1d" class="y">—</b></div></div><div class="signals"><div class="cell" style="grid-column:span 2"><small>ERKEN UYARI</small><b id="early" class="y">BEKLE</b></div><div class="cell" style="grid-column:span 2"><small>İŞLEM TEYİDİ</small><b id="confirm" class="y">BEKLE</b></div></div><div id="reason" class="note">Piyasa verisi bekleniyor.</div></div>
+<div class="section"><h3>SPOT + VADELİ İŞLEM AKIŞI</h3><div class="signals"><div class="cell"><small>Spot alım payı</small><b id="spotBuy">—</b></div><div class="cell"><small>Vadeli alım payı</small><b id="swapBuy">—</b></div><div class="cell"><small>Spot işlem</small><b id="spotN">—</b></div><div class="cell"><small>Vadeli işlem</small><b id="swapN">—</b></div></div><div id="flowState" class="note">Akış verisi bekleniyor.</div></div>
+</section><aside class="panel">
+<div class="section" style="margin-top:0"><h3>CANLI HİBRİT TARAMA</h3><div class="note">USDT-SWAP sözleşmeleri hacim ve hareketlilikle sıralanır. İlk 30 aday WebSocket ile izlenir.</div><div class="hybridstats"><div class="cell"><small>Sözleşme</small><b id="contractCount">—</b></div><div class="cell"><small>Canlı aday</small><b id="watchCount">—</b></div><div class="cell"><small>WebSocket</small><b id="wsState">—</b></div></div><div id="scanState" class="note y">Tarama başlıyor…</div><div id="hybridList" class="list"></div></div>
+<div class="section"><h3>OKX USDT-SWAP LİSTESİ</h3><div class="note"><span id="count">—</span> açık sözleşme</div><div id="coins" class="list"></div></div></aside></main>
+<footer>OKX halka açık piyasa verisi kullanılır. V5.8 VERİ GÜVENLİĞİ TEST • Mum seçimi OHLC • LONG ve SHORT senaryoları birlikte • Coin değişiminde istek kimliği korunur ve veriler coin bazında ayrılır. Dip/tepe işaretleri ATR tabanlı salınım ve sonraki kapanış teyidiyle üretilir; veri sağlık kontrolü OHLC, zaman sırası, güncellik ve yakın mum boşluklarını denetler; işaret teyit mumunda gösterilir. Her zaman dilimi bağımsız 400 kapanmış mumla analiz edilir; işlem kararı yalnızca 5 dakikalık kapanmış mumdan, en az iki üst zaman dilimi teyidiyle üretilir. Yatırım tavsiyesi değildir; sinyaller deneysel ve garanti değildir. BUY/SELL geçmiş mumlarda trend dönüşlerini gösterir; erken uyarılar geçicidir. Ücret, kayma, fonlama ve kaldıraç etkisi dahil değildir.</footer>
+<script>
+'use strict';
+const API='https://www.okx.com',WS='wss://ws.okx.com:8443/ws/v5/public',$=id=>document.getElementById(id),MS={'5m':300000,'15m':900000,'1H':3600000,'4H':14400000,'1D':86400000};
+let instruments=[],selected='BTC-USDT-SWAP',frames={},framesByCoin=new Map(),socket=null,topCoins=[],subs=new Set(),trades=new Map(),refreshTimer,scanTimer,flowTimer;let visibleCandles=100,chartStart=0,dragX=null,pinchBase=null,refreshSeq=0,chartSelection=null;
+const fmt=(v,d=5)=>Number.isFinite(+v)?(+v).toLocaleString('en-US',{maximumFractionDigits:d}):'—';
+function priceFmt(v){if(!Number.isFinite(+v))return '—';const a=Math.abs(+v),d=a>=1000?2:a>=1?4:a>=.01?6:a>=.0001?8:a>=.000001?10:12;return (+v).toLocaleString('en-US',{maximumFractionDigits:d});}
+function showOhlc(b){if(!b){$('ohlc').textContent='Muma dokun: O/H/L/C ve hacim bilgisi';return}const pct=b.o?(b.c/b.o-1)*100:0;$('ohlc').textContent=`${new Date(b.ts).toLocaleString('tr-TR')}  •  O ${priceFmt(b.o)}  H ${priceFmt(b.h)}  L ${priceFmt(b.l)}  C ${priceFmt(b.c)}  •  Hacim ${fmt(b.v,2)}  •  ${pct>=0?'+':''}${fmt(pct,2)}%`;}
+async function get(path){
+ const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),12000);
+ try{const r=await fetch(API+path,{cache:'no-store',signal:ctl.signal});if(!r.ok)throw Error('HTTP '+r.status);const j=await r.json();if(j.code!=='0')throw Error(j.msg||'OKX API');return j.data||[]}
+ catch(e){if(e.name==='AbortError')throw Error('OKX isteği 12 saniyede yanıt vermedi');throw e}
+ finally{clearTimeout(timer)}
+}
+function validateBars(bars,tf){
+ const step=MS[tf],issues=[];if(!Array.isArray(bars)||bars.length<60)return{ok:false,issues:['Mum sayısı 60 altında'],gaps:0};
+ for(let i=0;i<bars.length;i++){
+  const b=bars[i];
+  if(![b.ts,b.o,b.h,b.l,b.c,b.v].every(Number.isFinite)||b.ts<=0||b.o<=0||b.h<=0||b.l<=0||b.c<=0||b.v<0){issues.push('Geçersiz sayısal mum');break}
+  if(b.h<Math.max(b.o,b.c,b.l)||b.l>Math.min(b.o,b.c,b.h)){issues.push('OHLC sıralaması tutarsız');break}
+  if(i&&b.ts<=bars[i-1].ts){issues.push('Mum zaman sırası bozuk');break}
+ }
+ let gaps=0;for(let i=1;i<bars.length;i++){const delta=bars[i].ts-bars[i-1].ts;if(delta>step*1.5)gaps++}
+ const last=bars.at(-1),age=Date.now()-(last.ts+step),future=last.ts>Date.now()+step*.25;
+ if(future)issues.push('Mum zamanı gelecekte');
+ if(age>step*2)issues.push('Son kapanmış mum eski');
+ if(age< -step*.25)issues.push('Son mum henüz kapanmamış olabilir');
+ // Son 20 aralıkta boşluk varsa sinyal üretimini engelle.
+ let recentGaps=0;for(let i=Math.max(1,bars.length-20);i<bars.length;i++)if(bars[i].ts-bars[i-1].ts>step*1.5)recentGaps++;
+ if(recentGaps)issues.push('Son 20 mum içinde zaman boşluğu: '+recentGaps);
+ return{ok:issues.length===0,issues,gaps,lastAge:Math.max(0,age),count:bars.length};
+}
+function msg(t,ok=false){$('status').textContent=t;$('status').className=ok?'g':'y'}
+function set(id,t,c){$(id).textContent=t;if(c)$(id).className=c}
+function color(t){return t==='BUY'||t==='LONG'?'g':t==='SELL'||t==='SHORT'?'r':'y'}
+async function loadCoins(){const a=await get('/api/v5/public/instruments?instType=SWAP');instruments=a.filter(x=>x.settleCcy==='USDT'&&x.state==='live'&&x.instId.endsWith('-USDT-SWAP'));$('count').textContent=instruments.length;$('contractCount').textContent=instruments.length;renderCoins()}
+function renderCoins(){const q=$('search').value.toUpperCase(),a=instruments.filter(x=>x.instId.includes(q)).slice(0,250);$('coins').innerHTML=a.map(x=>`<div class="item ${x.instId===selected?'active':''}" data-id="${x.instId}"><b>${x.instId.replace('-USDT-SWAP','')}</b><span class="tag">USDT-SWAP</span></div>`).join('');$('coins').querySelectorAll('.item').forEach(e=>e.onclick=()=>choose(e.dataset.id))}
+function choose(id){
+ if(!id||id===selected)return;
+ selected=id;refreshSeq++;chartSelection=null;frames=framesByCoin.get(id)||{};
+ chartStart=0;renderCoins();renderHybrid();
+ set('coin',id);set('price','YÜKLENİYOR…');set('change','—');set('mark','—');set('vol','—');set('funding','—');set('updated','—');
+ // Coin değişiminde önceki coine ait bütün görünür değerleri anında temizle.
+ ['decision','early','confirm','zone','rsi','trend','entry','stop','tp1','tp2','tf5','tf15','tf1h','tf4h','tf1d','spotBuy','swapBuy','spotN','swapN','pivotSignal','pivotPrice','pivotTime','pivotInvalid','dataHealth','lastCandleAge','candleIntegrity','signalLock'].forEach(id=>set(id,'—','y'));
+ ['longState','longEntry','longStop','longTp1','longTp2','shortState','shortEntry','shortStop','shortTp1','shortTp2'].forEach(id=>set(id,'YENİ VERİ BEKLENİYOR','y'));
+ set('flowState','Yeni coin için işlem akışı yükleniyor.','y');set('dataHealthReason','Yeni coin verisi doğrulanıyor.');set('signalLock','AKTİF','y');
+ set('reason','Yeni coin için bağımsız mum verileri yükleniyor; önceki coine ait göstergeler temizlendi.');
+ set('ohlc','Yeni coin mum verisi bekleniyor.');
+ chart([],null,[]);subscriptions();refresh();
+}
+function ema(a,p){let k=2/(p+1),o=[];a.forEach((v,i)=>o.push(i?v*k+o[i-1]*(1-k):v));return o}
+function rsi(c,p=14){if(c.length<=p)return NaN;let g=0,l=0;for(let i=1;i<=p;i++){let d=c[i]-c[i-1];if(d>0)g+=d;else l-=d}g/=p;l/=p;for(let i=p+1;i<c.length;i++){let d=c[i]-c[i-1];g=(g*(p-1)+Math.max(d,0))/p;l=(l*(p-1)+Math.max(-d,0))/p}return l===0?100:100-100/(1+g/l)}
+function atr(a,p=10){let tr=[];for(let i=0;i<a.length;i++)tr.push(i?Math.max(a[i].h-a[i].l,Math.abs(a[i].h-a[i-1].c),Math.abs(a[i].l-a[i-1].c)):a[i].h-a[i].l);return ema(tr,p)}
+// Supertrend hesaplaması yalnızca kapanmış mum serisini kullanır.
+function supertrend(a,p=10,m=3){const av=atr(a,p),up=[],dn=[],line=[],dir=[];for(let i=0;i<a.length;i++){let mid=(a[i].h+a[i].l)/2,bu=mid+m*av[i],bd=mid-m*av[i];up[i]=i&&bu>up[i-1]&&a[i-1].c<=up[i-1]?up[i-1]:bu;dn[i]=i&&bd<dn[i-1]&&a[i-1].c>=dn[i-1]?dn[i-1]:bd;if(!i){dir[i]=1;line[i]=dn[i]}else if(dir[i-1]===1){dir[i]=a[i].c<dn[i]?-1:1;line[i]=dir[i]===1?dn[i]:up[i]}else{dir[i]=a[i].c>up[i]?1:-1;line[i]=dir[i]===1?dn[i]:up[i]}}return{line,dir,atr:av}}
+function assess(a,tf){if(a.length<60)return{ready:false,dir:'BEKLE',early:'BEKLE',why:'Yetersiz mum'};const st=supertrend(a),c=a.map(x=>x.c),e=ema(c,20),r=rsi(c),vavg=a.slice(-21,-1).reduce((s,x)=>s+x.v,0)/20,last=a.at(-1),i=a.length-1,dir=st.dir[i]===1?'LONG':'SHORT',prev=st.dir[i-1]===1?'LONG':'SHORT',flip=dir!==prev,vol=last.v>vavg*1.1,slice=a.slice(-12),low=Math.min(...slice.map(x=>x.l)),high=Math.max(...slice.map(x=>x.h)),range=last.h-last.l||1,earlyBuy=last.l<=low*1.002&&last.c>last.l+range*.58&&r>27&&r<52&&e[i]>e[i-3],earlySell=last.h>=high*.998&&last.c<last.h-range*.58&&r>48&&r<74&&e[i]<e[i-3],age=Date.now()-(last.ts+MS[tf]),fresh=age>=-MS[tf]*.25&&age<=MS[tf]*2;return{ready:fresh,dir:fresh?dir:'BEKLE',early:earlyBuy?'ERKEN BUY':earlySell?'ERKEN SELL':'BEKLE',flip,confirmed:fresh&&flip&&vol&&((dir==='LONG'&&r>40&&r<73)||(dir==='SHORT'&&r>27&&r<60))?(dir==='LONG'?'BUY':'SELL'):'BEKLE',st,r,vol,why:!fresh?'Mum zamanı eski':flip?'Trend yönü değişti':'Yeni trend dönüşü teyidi yok'}}
+function chart(a,st,marks){
+ const c=$('chart'),x=c.getContext('2d'),w=c.clientWidth,h=c.clientHeight,d=window.devicePixelRatio||1;
+ c.width=Math.max(1,Math.floor(w*d));c.height=Math.max(1,Math.floor(h*d));x.setTransform(d,0,0,d,0,0);x.clearRect(0,0,w,h);if(!a.length)return;
+ visibleCandles=Math.max(30,Math.min(160,visibleCandles));chartStart=Math.max(0,Math.min(Math.max(0,a.length-visibleCandles),chartStart));
+ const from=chartStart,to=Math.min(a.length,from+visibleCandles),view=a.slice(from,to);$('zoom').value=visibleCandles;$('zoomLabel').textContent=visibleCandles+' mum';
+ const pad=66,lo=Math.min(...view.map(b=>b.l)),hi=Math.max(...view.map(b=>b.h)),rg=hi-lo||Math.max(Math.abs(hi)*.001,1e-12),step=(w-pad-8)/Math.max(1,view.length),y=v=>8+(hi-v)/rg*(h-22);
+ x.font='10px system-ui';x.fillStyle='#91a3bc';for(let n=0;n<5;n++){let yy=8+(h-22)*n/4;x.strokeStyle='#1d2a3d';x.beginPath();x.moveTo(4,yy);x.lineTo(w-pad,yy);x.stroke();x.fillText(priceFmt(hi-rg*n/4),w-pad+4,yy+3)}
+ view.forEach((b,j)=>{let xx=5+j*step+step/2,col=b.c>=b.o?'#21d39b':'#ff647c';x.strokeStyle=col;x.fillStyle=col;x.beginPath();x.moveTo(xx,y(b.h));x.lineTo(xx,y(b.l));x.stroke();x.fillRect(xx-Math.max(1,step*.28),y(Math.max(b.o,b.c)),Math.max(2,step*.56),Math.max(1,Math.abs(y(b.o)-y(b.c))))});
+ if(st){for(let i=Math.max(1,from);i<to;i++){x.strokeStyle=st.dir[i]===1?'#c4f45b':'#ff7187';x.lineWidth=2;x.beginPath();x.moveTo(5+(i-1-from)*step+step/2,y(st.line[i-1]));x.lineTo(5+(i-from)*step+step/2,y(st.line[i]));x.stroke()}}
+ for(const m of marks){if(m.i<from||m.i>=to)continue;let j=m.i-from,xx=5+j*step+step/2,yy=(m.type==='BUY'||m.type==='DİP')?Math.min(h-25,y(a[m.i].l)+17):Math.max(24,y(a[m.i].h)-17);
+ x.fillStyle=(m.type==='BUY'||m.type==='DİP')?'#21d39b':(m.type==='SELL'||m.type==='TEPE')?'#ff647c':'#f4c84b';x.beginPath();
+ if(m.type==='BUY'||m.type==='DİP'){x.moveTo(xx,yy-8);x.lineTo(xx-6,yy+4);x.lineTo(xx+6,yy+4)}else if(m.type==='SELL'||m.type==='TEPE'){x.moveTo(xx,yy+8);x.lineTo(xx-6,yy-4);x.lineTo(xx+6,yy-4)}else x.arc(xx,yy,4,0,Math.PI*2);x.closePath();x.fill();
+ if(m.type==='TEPE'||m.type==='DİP'){x.font='bold 9px system-ui';x.textAlign='center';x.fillText(m.type+' ✓',xx,m.type==='DİP'?yy+15:yy-9)}
+ }x.textAlign='left';
+ if(chartSelection!==null&&chartSelection>=from&&chartSelection<to){const j=chartSelection-from,b=a[chartSelection],xx=5+j*step+step/2;x.save();x.strokeStyle='#f4c84b';x.setLineDash([4,3]);x.beginPath();x.moveTo(xx,5);x.lineTo(xx,h-5);x.stroke();x.restore();showOhlc(b)}else if(chartSelection===null)showOhlc(a.at(-1));else showOhlc(null);
+}
+function analyse(){
+ const names=['5m','15m','1H','4H','1D'];
+ const res=names.map(t=>assess(frames[t]||[],t));
+ ['tf5','tf15','tf1h','tf4h','tf1d'].forEach((id,i)=>set(id,res[i].dir,color(res[i].dir)));
+ const five=res[0],higher=res.slice(1);
+ const valid=res.every(x=>x.ready);
+ const L=higher.filter(x=>x.ready&&x.dir==='LONG').length;
+ const S=higher.filter(x=>x.ready&&x.dir==='SHORT').length;
+ const early=res.filter(x=>x.ready&&x.early==='ERKEN BUY').length>=2?'ERKEN BUY':
+             res.filter(x=>x.ready&&x.early==='ERKEN SELL').length>=2?'ERKEN SELL':'BEKLE';
+
+ // Tek işlem/karar zaman dilimi 5 dakikadır. Üst zamanlar yalnızca teyit verir.
+ let decision='BEKLE';
+ if(five.ready&&five.confirmed==='BUY'&&L>=2)decision='BUY';
+ if(five.ready&&five.confirmed==='SELL'&&S>=2)decision='SELL';
+ set('decision',decision,color(decision));
+ set('early',early,color(early));
+ set('confirm',decision,color(decision));
+
+ // Seçili grafik zaman diliminin göstergeleri grafiği takip eder.
+ const chartTf=$('tf').value,a=frames[chartTf]||[],cur=assess(a,chartTf),st=cur.st;
+ set('zone',cur.early==='ERKEN BUY'?'DİP ADAYI':cur.early==='ERKEN SELL'?'TEPE ADAYI':'İZLENİYOR',color(cur.early));
+ set('rsi',fmt(cur.r,1));
+ set('trend',st?(st.dir.at(-1)===1?'YUKARI':'AŞAĞI'):'—',st?(st.dir.at(-1)===1?'g':'r'):'y');
+
+ // Giriş, risk, stop ve hedefler her zaman 5 dakikalık kapanmış mumdan hesaplanır.
+ const execBars=frames['5m']||[],exec=assess(execBars,'5m'),entry=execBars.at(-1)?.c;
+ const execStop=exec.st?.line?.at(-1),atrNow=exec.st?.atr?.at(-1);
+ const riskDist=Number.isFinite(atrNow)&&atrNow>0?atrNow*1.5:NaN;
+ set('entry',exec.ready&&Number.isFinite(entry)?priceFmt(entry):'—');
+ const decisionStop=decision==='BUY'?(Number.isFinite(execStop)&&execStop<entry?execStop:entry-riskDist):decision==='SELL'?(Number.isFinite(execStop)&&execStop>entry?execStop:entry+riskDist):execStop;
+ set('stop',Number.isFinite(decisionStop)?priceFmt(decisionStop):'—');
+ const stopRisk=Number.isFinite(entry)&&Number.isFinite(decisionStop)?Math.abs(entry-decisionStop):NaN;
+ set('tp1',decision!=='BEKLE'&&stopRisk>0?priceFmt(entry+(decision==='BUY'?1:-1)*stopRisk*1.5):'—');
+ set('tp2',decision!=='BEKLE'&&stopRisk>0?priceFmt(entry+(decision==='BUY'?1:-1)*stopRisk*2.5):'—');
+
+ // İki yönün planı ayrı ayrı görünür; fakat sinyal yalnızca 5dk + en az 2 üst zaman teyidiyle oluşur.
+ const putScenario=(prefix,dir)=>{
+   const sign=dir==='LONG'?1:-1;
+   const superStop=execStop;
+   const stop=Number.isFinite(entry)&&Number.isFinite(superStop)&&((dir==='LONG'&&superStop<entry)||(dir==='SHORT'&&superStop>entry))?superStop:(Number.isFinite(entry)&&Number.isFinite(riskDist)?entry-sign*riskDist:NaN);
+   const r=Number.isFinite(entry)&&Number.isFinite(stop)?Math.abs(entry-stop):NaN;
+   const tp1=Number.isFinite(r)?entry+sign*r*1.5:NaN;
+   const tp2=Number.isFinite(r)?entry+sign*r*2.5:NaN;
+   const directionMatch=exec.ready&&exec.dir===dir;
+   const support=dir==='LONG'?L:S;
+   let state='İZLEMEDE';
+   if(!exec.ready)state='5DK VERİSİ ESKİ / EKSİK';
+   else if(!directionMatch)state='5DK YÖNÜ TERS';
+   else if(exec.confirmed===(dir==='LONG'?'BUY':'SELL')&&support>=2)state='5DK + ÜST TF TEYİTLİ';
+   else if(support>=2)state='ÜST TF DESTEKLİ • TETİK BEKLENİYOR';
+   else state='ÜST TF TEYİDİ YETERSİZ';
+   set(prefix+'State',state,state.includes('TEYİTLİ')||state.includes('DESTEKLİ')?'g':'y');
+   set(prefix+'Entry',priceFmt(entry));
+   set(prefix+'Stop',priceFmt(stop));
+   set(prefix+'Tp1',priceFmt(tp1));
+   set(prefix+'Tp2',priceFmt(tp2));
+ };
+ putScenario('long','LONG');
+ putScenario('short','SHORT');
+
+ let marks=[];
+ if(st)for(let i=Math.max(1,a.length-100);i<st.dir.length;i++)if(st.dir[i]!==st.dir[i-1])marks.push({i,type:st.dir[i]===1?'BUY':'SELL'});
+ // Dip/tepe: aday pivot, ATR tabanlı anlamlı salınım ve kapanış teyidi.
+ // İşaret, pivot mumuna geriye dönük konmaz; teyidin oluştuğu mumda gösterilir.
+ const span=({'5m':4,'15m':3,'1H':3,'4H':2,'1D':2})[chartTf]||3;
+ const av=atr(a,14),closes=a.map(b=>b.c),rsis=[];
+ for(let k=0;k<a.length;k++)rsis[k]=rsi(closes.slice(0,k+1));
+ const minGap=({'5m':10,'15m':8,'1H':7,'4H':5,'1D':4})[chartTf]||7;
+ const promMult=({'5m':1.25,'15m':1.2,'1H':1.15,'4H':1.1,'1D':1.05})[chartTf]||1.15;
+ let lastPeak=-minGap,lastTrough=-minGap;
+ for(let i=span;i<a.length-span;i++){
+  const p=a[i],left=a.slice(i-span,i),right=a.slice(i+1,i+span+1),confirm=i+span;
+  if(confirm>=a.length)continue;
+  const window=a.slice(Math.max(0,i-span*3),Math.min(a.length,i+span*3+1));
+  const swingLow=Math.min(...window.map(z=>z.l)),swingHigh=Math.max(...window.map(z=>z.h));
+  const prominence=Math.max(av[i]*promMult,Math.abs(p.c)*0.0008);
+  const body=Math.max(Math.abs(p.c-p.o),Math.abs(p.h-p.l)*0.08);
+  const lowerWick=Math.min(p.o,p.c)-p.l,upperWick=p.h-Math.max(p.o,p.c);
+  const isPeak=left.every(z=>p.h>=z.h)&&right.every(z=>p.h>z.h)&&p.h-swingLow>=prominence;
+  const isTrough=left.every(z=>p.l<=z.l)&&right.every(z=>p.l<z.l)&&swingHigh-p.l>=prominence;
+  const confirmBars=a.slice(i+1,confirm+1),confirmClose=a[confirm].c;
+  const avgVol=a.slice(Math.max(0,confirm-20),confirm).reduce((sum,z)=>sum+z.v,0)/Math.max(1,a.slice(Math.max(0,confirm-20),confirm).length);
+  const volumeOK=!Number.isFinite(avgVol)||avgVol<=0||a[confirm].v>=avgVol*0.55;
+  const rsiPivot=rsis[i],rsiConfirm=rsis[confirm];
+  const dipConfirmed=isTrough&&confirmClose>p.c+Math.max(av[i]*0.15,body*0.25)&&confirmBars.some(z=>z.c>p.c)&&lowerWick>=body*0.35&&rsiConfirm>=rsiPivot-1&&volumeOK;
+  const peakConfirmed=isPeak&&confirmClose<p.c-Math.max(av[i]*0.15,body*0.25)&&confirmBars.some(z=>z.c<p.c)&&upperWick>=body*0.35&&rsiConfirm<=rsiPivot+1&&volumeOK;
+  if(peakConfirmed&&confirm-lastPeak>=minGap){marks.push({i:confirm,type:'TEPE',pivot:p.h,confirmClose,signalTs:a[confirm].ts});lastPeak=confirm}
+  if(dipConfirmed&&confirm-lastTrough>=minGap){marks.push({i:confirm,type:'DİP',pivot:p.l,confirmClose,signalTs:a[confirm].ts});lastTrough=confirm}
+ }
+ const pivots=marks.filter(m=>m.type==='DİP'||m.type==='TEPE').sort((x,y)=>x.i-y.i);
+ const latestPivot=pivots.at(-1),freshPivot=latestPivot&&(a.length-1-latestPivot.i)<=3;
+ if(freshPivot){
+  const isDip=latestPivot.type==='DİP';
+  set('pivotSignal',isDip?'DİP ONAYLANDI':'TEPE ONAYLANDI',isDip?'g':'r');
+  set('pivotPrice',priceFmt(latestPivot.confirmClose));
+  set('pivotTime',new Date(latestPivot.signalTs).toLocaleString('tr-TR'));
+  set('pivotInvalid',priceFmt(latestPivot.pivot));
+  set('pivotReason',`${isDip?'Yukarı':'Aşağı'} dönüş kapanışla teyit edildi. Geçersizleşme referansı pivot ${isDip?'dibi':'tepesi'}dir; bu bir emir değildir.`);
+ }else if(cur.early==='ERKEN BUY'||cur.early==='ERKEN SELL'){
+  const isDip=cur.early==='ERKEN BUY';
+  set('pivotSignal',isDip?'DİP ADAYI':'TEPE ADAYI', 'y');
+  set('pivotPrice',priceFmt(a.at(-1)?.c));set('pivotTime',new Date(a.at(-1).ts).toLocaleString('tr-TR'));
+  set('pivotInvalid','Henüz teyit yok');
+  set('pivotReason','Erken dönüş koşulları oluştu; kapanış teyidi gelmeden işlem sinyali sayılmaz.');
+ }else{
+  set('pivotSignal','SİNYAL BEKLENİYOR','y');set('pivotPrice','—');set('pivotTime','—');set('pivotInvalid','—');
+  set('pivotReason','Son 3 mum içinde onaylı dip/tepe yok. Yeni dönüş teyidi bekleniyor.');
+ }
+ if(cur.early!=='BEKLE')marks.push({i:a.length-1,type:'ERKEN'});
+ chart(a,st,marks);
+ set('reason',`İşlem kararı yalnızca 5 dakikalık kapanmış mumdan üretilir. Üst zaman teyidi: LONG ${L}/4 • SHORT ${S}/4. ${valid?'Beş zaman dilimi güncel.':'Bazı zaman dilimleri güncel değil.'} 5dk durum: ${exec.why}. Sinyal için 5dk dönüş teyidi ve aynı yönde en az 2 üst zaman dilimi gerekir. Erken uyarı kesin işlem sinyali değildir.`);
+ return decision;
+}
+async function load400(instId,tf){
+ const root='/api/v5/market/candles?instId='+encodeURIComponent(instId)+'&bar='+tf;
+ const first=await get(root+'&limit=300'),oldest=first.length?first[first.length-1][0]:null;
+ // Her sayfalama isteğinde yalnızca tek limit parametresi kullanılır.
+ const second=oldest?await get(root+'&after='+encodeURIComponent(oldest)+'&limit=100'):[];
+ const unique=new Map([...first,...second].map(row=>[row[0],row]));
+ return [...unique.values()].filter(row=>row[8]==='1').map(row=>({ts:+row[0],o:+row[1],h:+row[2],l:+row[3],c:+row[4],v:+row[7]})).sort((a,b)=>a.ts-b.ts).slice(-400);
+}
+async function refresh(){
+ const instId=selected,seq=++refreshSeq;
+ try{
+  msg(instId+' verisi alınıyor…');
+  const [t,m,f]=await Promise.all([
+   get('/api/v5/market/ticker?instId='+encodeURIComponent(instId)),
+   get('/api/v5/public/mark-price?instType=SWAP&instId='+encodeURIComponent(instId)),
+   get('/api/v5/public/funding-rate?instId='+encodeURIComponent(instId))
+  ]);
+  const names=['5m','15m','1H','4H','1D'];
+  const raw=await Promise.all(names.map(tf=>load400(instId,tf)));
+  // Kullanıcı bu sırada başka coine geçtiyse eski isteğin sonucu ekrana yazılmaz.
+  if(seq!==refreshSeq||instId!==selected)return;
+  const q=t[0];if(!q)throw Error('Ticker yok: '+instId);
+  if(q.instId&&q.instId!==instId)throw Error('Ticker sözleşme eşleşmesi hatalı: '+q.instId);
+  if(m[0]?.instId&&m[0].instId!==instId)throw Error('Mark fiyatı sözleşme eşleşmesi hatalı: '+m[0].instId);
+  if(f[0]?.instId&&f[0].instId!==instId)throw Error('Fonlama sözleşme eşleşmesi hatalı: '+f[0].instId);
+  const validFrames={},checks={};
+  names.forEach((tf,i)=>{validFrames[tf]=raw[i];checks[tf]=validateBars(raw[i],tf)});
+  const bad=names.filter(tf=>!checks[tf].ok);
+  if(bad.length)throw Error('Veri doğrulaması başarısız ('+bad.join(', ')+'): '+bad.map(tf=>tf+' '+checks[tf].issues.join(', ')).join(' | '));
+  const p=+q.last,open=+q.open24h,markPx=+m[0]?.markPx,rate=+f[0]?.fundingRate;
+  if(!(Number.isFinite(p)&&p>0&&Number.isFinite(open)&&open>0))throw Error('Ticker fiyatı geçersiz');
+  if(!(Number.isFinite(markPx)&&markPx>0))throw Error('Mark fiyatı geçersiz');
+  if(f[0]&& !Number.isFinite(rate))throw Error('Fonlama verisi geçersiz');
+  frames=validFrames;framesByCoin.set(instId,validFrames);
+   renderAudit(validFrames,instId,q.ts);
+  const age=checks['5m'].lastAge;
+  set('dataHealth','DOĞRULANDI','g');set('lastCandleAge',Math.round(age/1000)+' sn','g');set('candleIntegrity',names.map(tf=>checks[tf].count).join(' / '),'g');set('signalLock','AÇIK','g');
+  set('dataHealthReason','5 zaman dilimi doğrulandı • OHLC tutarlı • son mumlar güncel • son 20 mumda zaman boşluğu yok.');
+  const ch=(p/open-1)*100;
+  set('coin',instId);set('price',fmt(p,8));set('change',(ch>=0?'+':'')+fmt(ch,2)+'%');
+  set('mark',fmt(m[0]?.markPx,8));set('vol',fmt(q.volCcy24h,1));
+  set('funding',f[0]?fmt(+f[0].fundingRate*100,4)+'%':'—');
+  set('updated',new Date(+q.ts).toLocaleTimeString('tr-TR'));
+  chartStart=Math.max(0,(frames[$('tf').value]||[]).length-visibleCandles);
+  analyse();await flow(instId,seq);
+  if(seq===refreshSeq&&instId===selected)msg(instId+' • OKX verisi güncel • kapanmış mumlar',true);
+ }catch(e){
+  if(seq!==refreshSeq||instId!==selected)return;
+  msg('Veri alınamadı ('+instId+'): '+e.message);
+  set('decision','BEKLE','y');set('early','BEKLE','y');set('confirm','BEKLE','y');set('pivotSignal','VERİ DOĞRULANAMADI','r');set('pivotPrice','—');set('pivotTime','—');set('pivotInvalid','—');set('dataHealth','HATA / ŞÜPHELİ','r');set('lastCandleAge','—');set('candleIntegrity','BAŞARISIZ','r');set('signalLock','KİLİTLİ','r');set('dataHealthReason',e.message);set('pivotReason','Veri güvenlik kontrolü geçmedi. Dip/tepe ve işlem sinyali üretilmedi.');set('reason','Veri doğrulaması başarısız; sinyal güvenlik nedeniyle durduruldu.');
+  ['longState','longEntry','longStop','longTp1','longTp2','shortState','shortEntry','shortStop','shortTp1','shortTp2'].forEach(id=>set(id,'VERİ YOK','y'));
+ }
+}
+
+function renderAudit(frames,instId,tickerTs){
+ const names=['5m','15m','1H','4H','1D'];
+ $('auditRows').innerHTML=names.map(tf=>{
+  const a=frames[tf]||[],b=a.at(-1);
+  if(!b)return `<tr><td>${tf}</td><td colspan="6">Mum bulunamadı</td></tr>`;
+  return `<tr><td style="padding:6px">${tf}</td>
+   <td style="padding:6px">${new Date(b.ts).toLocaleString('tr-TR')}</td>
+   <td style="text-align:right;padding:6px">${priceFmt(b.o)}</td>
+   <td style="text-align:right;padding:6px">${priceFmt(b.h)}</td>
+   <td style="text-align:right;padding:6px">${priceFmt(b.l)}</td>
+   <td style="text-align:right;padding:6px">${priceFmt(b.c)}</td>
+   <td style="text-align:right;padding:6px">${fmt(b.v,4)}</td></tr>`;
+ }).join('');
+ $('auditMeta').textContent=`Sözleşme: ${instId} • Ticker güncelleme: ${tickerTs?new Date(+tickerTs).toLocaleString('tr-TR'):'—'} • Kaynak: OKX /api/v5/market/candles • Karşılaştırma anahtarı: mum açılış zamanı (timestamp).`;
+}
+
+function stats(a){const recent=a.filter(t=>t.ts>Date.now()-60000),buy=recent.filter(t=>t.side==='buy').reduce((s,t)=>s+t.p*t.sz,0),sell=recent.filter(t=>t.side==='sell').reduce((s,t)=>s+t.p*t.sz,0);return{n:recent.length,pct:buy+sell?100*buy/(buy+sell):NaN}}
+async function flow(instId=selected,seq=refreshSeq){try{const spot=await get('/api/v5/market/trades?instId='+instId.replace('-SWAP','')+'&limit=100');if(instId!==selected||seq!==refreshSeq)return;const s=stats(spot.map(t=>({ts:+t.ts,p:+t.px,sz:+t.sz,side:t.side}))),f=stats(trades.get(instId)||[]);set('spotBuy',Number.isFinite(s.pct)?s.pct.toFixed(0)+'%':'—');set('swapBuy',Number.isFinite(f.pct)?f.pct.toFixed(0)+'%':'—');set('spotN',s.n);set('swapN',f.n);let z='YETERSİZ İŞLEM VERİSİ';if(s.n>=8&&f.n>=8)z=s.pct>=58&&f.pct>=58?'SPOT + VADELİ ALIM UYUMU':s.pct<=42&&f.pct<=42?'SPOT + VADELİ SATIŞ UYUMU':'UYUMSUZLUK • BEKLE';set('flowState',z,z.includes('ALIM')?'g':z.includes('SATIŞ')?'r':'y')}catch(e){if(instId===selected&&seq===refreshSeq)set('flowState','Spot işlem akışı alınamadı; akış teyidi kullanılmıyor.','y')}}
+function score(t){const p=+t.last,o=+t.open24h,v=+t.volCcy24h;if(!(p>0&&o>0))return null;const ch=(p/o-1)*100;return{id:t.instId,ch,v,score:Math.min(40,Math.log10(Math.max(1,v))*4)+Math.min(40,Math.abs(ch)*4)+Math.min(20,Math.log10(Math.max(1,+t.vol24h))*2)}}
+function renderHybrid(){$('hybridList').innerHTML=topCoins.slice(0,12).map((x,i)=>`<div class="item ${x.id===selected?'active':''}" data-id="${x.id}"><span><b>${i+1}. ${x.id.replace('-USDT-SWAP','')}</b><small>${x.ch>=0?'+':''}${fmt(x.ch,2)}% • ${fmt(x.v,0)} USDT</small></span><b class="${x.ch>=0?'g':'r'}">${fmt(x.score,0)}</b></div>`).join('');$('hybridList').querySelectorAll('.item').forEach(e=>e.onclick=()=>choose(e.dataset.id))}
+function send(ids,op){if(!socket||socket.readyState!==1||!ids.length)return;const a=ids.map(instId=>({channel:'trades',instId}));for(let i=0;i<a.length;i+=20)socket.send(JSON.stringify({op,args:a.slice(i,i+20)}))}
+function connect(){if(socket&&[WebSocket.OPEN,WebSocket.CONNECTING].includes(socket.readyState))return;socket=new WebSocket(WS);socket.onopen=()=>{set('wsState','BAĞLI','g');const ids=[...new Set([...topCoins.slice(0,30).map(x=>x.id),selected])];subs=new Set(ids);send(ids,'subscribe')};socket.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch{return}if(m.arg?.channel!=='trades'||!m.data)return;m.data.forEach(t=>{const id=t.instId,a=trades.get(id)||[];a.push({ts:+t.ts,p:+t.px,sz:+t.sz,side:t.side});while(a.length&&a[0].ts<Date.now()-90000)a.shift();trades.set(id,a)})};socket.onclose=()=>{set('wsState','YENİDEN BAĞLANIYOR','y');setTimeout(connect,4000)};socket.onerror=()=>set('wsState','BAĞLANTI HATASI','r')}
+function subscriptions(){if(!socket||socket.readyState!==1)return;const next=new Set([...topCoins.slice(0,30).map(x=>x.id),selected]);send([...subs].filter(x=>!next.has(x)),'unsubscribe');send([...next].filter(x=>!subs.has(x)),'subscribe');subs=next}
+async function scan(){try{const d=await get('/api/v5/market/tickers?instType=SWAP'),valid=new Set(instruments.map(x=>x.instId));topCoins=d.filter(x=>valid.has(x.instId)).map(score).filter(Boolean).sort((a,b)=>b.score-a.score).slice(0,30);set('watchCount',topCoins.length);renderHybrid();subscriptions();set('scanState','Tarama güncel • 30 saniyede yenilenir','g')}catch(e){set('scanState','Tarama hatası: '+e.message,'r')}}
+async function init(){try{await loadCoins();connect();await scan();await refresh();scanTimer=setInterval(scan,30000);refreshTimer=setInterval(refresh,25000);flowTimer=setInterval(()=>flow(selected,refreshSeq),15000)}catch(e){msg('Başlatılamadı: '+e.message)}}
+function redraw(){if((frames[$('tf').value]||[]).length)analyse()}
+function setZoom(v,anchor=.5){const a=frames[$('tf').value]||[],old=visibleCandles,idx=chartStart+Math.round(old*anchor);visibleCandles=Math.max(30,Math.min(160,Math.round(v)));chartStart=Math.max(0,Math.min(Math.max(0,a.length-visibleCandles),idx-Math.round(visibleCandles*anchor)));redraw()}
+$('zoom').oninput=e=>setZoom(+e.target.value);$('zoomIn').onclick=()=>setZoom(visibleCandles-10);$('zoomOut').onclick=()=>setZoom(visibleCandles+10);$('latest').onclick=()=>{chartStart=Math.max(0,(frames[$('tf').value]||[]).length-visibleCandles);redraw()};
+const cv=$('chart');cv.addEventListener('wheel',e=>{e.preventDefault();setZoom(visibleCandles+(e.deltaY>0?10:-10),.5)},{passive:false});
+cv.addEventListener('click',e=>{const a=frames[$('tf').value]||[],r=cv.getBoundingClientRect(),px=e.clientX-r.left,pad=66,step=(cv.clientWidth-pad-8)/Math.max(1,Math.min(a.length-chartStart,visibleCandles)),j=Math.max(0,Math.min(Math.min(a.length-chartStart,visibleCandles)-1,Math.floor((px-5)/step)));if(a.length){chartSelection=chartStart+j;redraw()}});
+cv.addEventListener('touchstart',e=>{if(e.touches.length===1)dragX={x:e.touches[0].clientX,start:chartStart,moved:false,y:e.touches[0].clientY};else if(e.touches.length===2){dragX=null;pinchBase={dist:Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY),count:visibleCandles}}},{passive:false});
+cv.addEventListener('touchmove',e=>{e.preventDefault();const a=frames[$('tf').value]||[];if(e.touches.length===2&&pinchBase){const dist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);setZoom(pinchBase.count*(pinchBase.dist/dist),.5)}else if(e.touches.length===1&&dragX){const dx=e.touches[0].clientX-dragX.x;if(Math.abs(dx)>8||Math.abs(e.touches[0].clientY-dragX.y)>8)dragX.moved=true;const per=visibleCandles/Math.max(1,cv.clientWidth);chartStart=Math.max(0,Math.min(Math.max(0,a.length-visibleCandles),dragX.start-Math.round(dx*per)));redraw()}},{passive:false});
+cv.addEventListener('touchend',e=>{if(e.touches.length<2)pinchBase=null;if(e.touches.length===0&&dragX){if(!dragX.moved){const a=frames[$('tf').value]||[],r=cv.getBoundingClientRect(),pad=66,step=(cv.clientWidth-pad-8)/Math.max(1,Math.min(a.length-chartStart,visibleCandles)),px=dragX.x-r.left,j=Math.max(0,Math.min(Math.min(a.length-chartStart,visibleCandles)-1,Math.floor((px-5)/step)));if(a.length){chartSelection=chartStart+j;redraw()}}dragX=null}});
+$('search').oninput=renderCoins;$('tf').onchange=()=>{chartStart=Math.max(0,(frames[$('tf').value]||[]).length-visibleCandles);chartSelection=null;analyse()};$('refresh').onclick=refresh;window.addEventListener('resize',()=>analyse());init();
+</script></body></html>
